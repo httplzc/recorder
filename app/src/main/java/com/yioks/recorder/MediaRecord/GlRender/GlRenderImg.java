@@ -3,7 +3,7 @@ package com.yioks.recorder.MediaRecord.GlRender;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 
-import com.yioks.recorder.MediaRecord.RenderHelper.TexturePositionUtil;
+import com.yioks.recorder.MediaRecord.Utils.TexturePositionUtil;
 import com.yioks.recorder.MediaRecord.Utils.GlUtil;
 
 import java.nio.FloatBuffer;

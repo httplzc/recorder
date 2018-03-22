@@ -1,4 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
+package com.yioks.recorder.MediaRecord.RecorderHelper;
 
 /**
  * Created by Lzc on 2018/3/16 0016.

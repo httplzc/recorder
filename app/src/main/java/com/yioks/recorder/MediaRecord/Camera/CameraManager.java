@@ -1,54 +1,39 @@
 package com.yioks.recorder.MediaRecord.Camera;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.media.MediaCodecInfo;
-import android.support.annotation.NonNull;
 import android.support.annotation.Size;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.view.SurfaceHolder;
 
-import java.io.IOException;
+import com.yioks.recorder.MediaRecord.Bean.CameraSetting;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by ${UserWrapper} on 2017/5/3 0003.
+ * Created by lzc on 2017/5/3 0003.
  */
 
 public class CameraManager {
+    //相机对象
     private Camera mCamera;
-    private Activity context;
-    private boolean askedPermission = false;
     private boolean isOpenCamera = false;
-    private int fps;
-    private int cameraPosition = 0;
-    private static final int targetWidth = 1080;
-    private static final int targetHeight = 1920;
-    private static final int previewViewFps = 30;
+    //回调信息
     private CallBackEvent event;
-    private SurfaceHolder surfaceHolder;
 
-    private SurfaceTexture surfaceTexture;
-    private int colorFormat;
-
-
+    //相机配置
+    private CameraSetting cameraSetting;
     //照片分辨率
     private int photoWidth;
     private int photoHeight;
     //录制分辨率
     private int videoWidth;
     private int videoHeight;
-    private int mOrientation;
+    //真实fps
+    private int realFps;
 
-    private boolean exposureEnable = false;
-
+    //当前放大倍率
     private int currentZoom = 0;
 
 
@@ -57,72 +42,28 @@ public class CameraManager {
     }
 
 
-    public CameraManager(Activity context, SurfaceHolder surfaceHolder) {
-        this.context = context;
-        this.surfaceHolder = surfaceHolder;
-    }
-
-    public CameraManager(Activity context) {
-        this.context = context;
+    public CameraManager(CameraSetting cameraSetting) {
+        this.cameraSetting = cameraSetting;
     }
 
 
-    private void openCameraWithPermission() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            realInitCamera(surfaceTexture);
-        } else if (!askedPermission) {
-            ActivityCompat.requestPermissions(context,
-                    new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO},
-                    3668);
-            askedPermission = true;
-        } else {
-            // Wait for permission result
-        }
-    }
-
-    public void onRequestPermissionsDo(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 3668) {
-            if (grantResults[0] == 0 && grantResults[1] == 0) {
-                realInitCamera(surfaceTexture);
-            } else {
-                if (event != null)
-                    event.openCameraFailure(0);
-            }
-        }
-    }
-
-
-    private void realInitCamera(SurfaceTexture surfaceTexture) {
-        if (mCamera != null) {
-            freeCameraResource();
-        }
-        try {
-            mCamera = Camera.open(cameraPosition);
-        } catch (Exception e) {
-            e.printStackTrace();
-            freeCameraResource();
-            mCamera = null;
-        }
-        if (mCamera == null) {
+    /**
+     * 初始化摄像头同时开启预览
+     */
+    public void initCamera() {
+        if (openCamera()) {
+            changeCameraParams();
+            //保存和回调真实属性
+            saveCameraRealParams();
+            mCamera.startPreview();
+            isOpenCamera = true;
             if (event != null)
-                event.openCameraFailure(cameraPosition);
-            return;
+                event.openCameraSuccess(cameraSetting.cameraPosition);
         }
-//        changeCameraParams();
-        try {
-            if (surfaceTexture != null)
-                mCamera.setPreviewTexture(surfaceTexture);
-            else
-                mCamera.setPreviewDisplay(surfaceHolder);
-        } catch (IOException e) {
-            e.printStackTrace();
-            if (event != null)
-                event.openCameraFailure(cameraPosition);
-            return;
-        }
+    }
 
-        changeCameraParams(targetWidth, targetHeight);
+    //保存真实属性
+    private void saveCameraRealParams() {
         Camera.Size size = mCamera.getParameters().getPictureSize();
         if (event != null)
             event.onPhotoSizeChange(size.height, size.width);
@@ -133,20 +74,35 @@ public class CameraManager {
             event.onVideoSizeChange(size.height, size.width);
         videoWidth = size.height;
         videoHeight = size.width;
-        mCamera.startPreview();
-        //    mCamera.lock();
-        isOpenCamera = true;
-        if (event != null)
-            event.openCameraSuccess(cameraPosition);
+        int fpsRange[] = new int[2];
+        mCamera.getParameters().getPreviewFpsRange(fpsRange);
+        realFps = fpsRange[0];
     }
 
     /**
-     * 初始化摄像头同时开启预览
+     * 打开相机
+     *
+     * @return 是否成功
      */
-    public void initCamera(SurfaceTexture surfaceTexture) {
-        this.surfaceTexture = surfaceTexture;
-        openCameraWithPermission();
-
+    private boolean openCamera() {
+        if (mCamera != null) {
+            freeCameraResource();
+        }
+        try {
+            mCamera = Camera.open(cameraSetting.cameraPosition);
+            if (cameraSetting.surfaceTexture != null)
+                mCamera.setPreviewTexture(cameraSetting.surfaceTexture);
+            else
+                mCamera.setPreviewDisplay(cameraSetting.surfaceHolder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            freeCameraResource();
+            mCamera = null;
+            if (event != null)
+                event.openCameraFailure(cameraSetting.cameraPosition);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -196,79 +152,81 @@ public class CameraManager {
         return result;
     }
 
-    public void changeCamera() {
+    public void switchCamera() {
         if (!isOpenCamera || Camera.getNumberOfCameras() <= 1) {
             return;
         }
-        cameraPosition = cameraPosition == 1 ? 0 : 1;
-        initCamera(surfaceTexture);
-    }
-
-    public void setExposure(boolean enable) {
-        if (mCamera == null)
-            return;
-        this.exposureEnable = enable;
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setExposureCompensation(enable ? 1 : 0);
-        // parameters.set("brightness-step",parameters.get("max-brightness"));
-        mCamera.setParameters(parameters);
+        cameraSetting.cameraPosition = cameraSetting.cameraPosition == 1 ? 0 : 1;
+        initCamera();
     }
 
 
-    //设置相机参数
-    private void changeCameraParams(int targetWidth, int targetHeight) {
-        Camera.Parameters parameters = mCamera.getParameters();
+    /**
+     * 选取拍照最佳分辨率
+     */
+    private void initCameraPicSize(Camera.Parameters parameters) {
         // 获取摄像头支持的PictureSize列表
         List<Camera.Size> pictureSizeList = parameters.getSupportedPictureSizes();
-        /**从列表中选取合适的分辨率*/
-        Camera.Size picSize = calcBestSize(pictureSizeList, targetWidth, targetHeight);
-
+        //从列表中选取合适的分辨率
+        Camera.Size picSize = calcBestSize(pictureSizeList, cameraSetting.width, cameraSetting.height);
         if (null == picSize) {
             picSize = parameters.getPictureSize();
         }
         // 根据选出的PictureSize重新设置SurfaceView大小
         parameters.setPictureSize(picSize.width, picSize.height);
+    }
 
+
+    /**
+     * 设置预览分辨率
+     */
+    private void initCameraPreviewSize(Camera.Parameters parameters) {
         // 获取摄像头支持的PreviewSize列表
         List<Camera.Size> previewSizeList = parameters.getSupportedPreviewSizes();
-        Camera.Size preSize = calcBestSize(previewSizeList, targetWidth, targetHeight);
+        Camera.Size preSize = calcBestSize(previewSizeList, cameraSetting.width, cameraSetting.height);
         if (null == preSize) {
             preSize = parameters.getPreferredPreviewSizeForVideo();
         }
         parameters.setPreviewSize(preSize.width, preSize.height);
-        fps = chooseFixedPreviewFps(parameters, previewViewFps * 1000);
-        parameters.setJpegQuality(100); // 设置照片质量
+    }
 
-        //获取对焦支持列表
+    //设置最佳FPS
+    private void initPreviewFps(Camera.Parameters parms) {
+        List<int[]> supported = parms.getSupportedPreviewFpsRange();
+        for (int[] entry : supported) {
+            if ((entry[0] == entry[1]) && (entry[0] == cameraSetting.fps * 1000)) {
+                parms.setPreviewFpsRange(entry[0], entry[1]);
+                return;
+            }
+        }
+    }
+
+    //设置对焦模式
+    private void initCameraFocusMode(Camera.Parameters parameters) {
         List<String> focusModes = parameters.getSupportedFocusModes();
         if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
         } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         }
+    }
 
-        setExposure(exposureEnable);
-//        //获取体颜色类型列表
-//        List<Integer> previewFormatsSizes = parameters.getSupportedPreviewFormats();
-//        if (-1 != previewFormatsSizes.indexOf(ImageFormat.NV21)) {
-//            parameters.setPreviewFormat(ImageFormat.NV21);
-//            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-//                colorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
-//            else
-//                colorFormat = COLOR_FormatYUV420Flexible;
-//        } else if (-1 != previewFormatsSizes.indexOf(ImageFormat.YV12)) {
-//            parameters.setPreviewFormat(ImageFormat.YV12);
-//            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-//                colorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
-//            else
-//                colorFormat = COLOR_FormatYUV420Flexible;
-//        } else
-        colorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 
+    //设置相机参数
+    private void changeCameraParams() {
+        Camera.Parameters parameters = mCamera.getParameters();
+        //修改拍照分辨率
+        initCameraPicSize(parameters);
+        //修改预览分辨率
+        initCameraPreviewSize(parameters);
+        //修改预览fps
+        initPreviewFps(parameters);
+        // 设置照片质量
+        parameters.setJpegQuality(100);
+        //设置对焦模式
+        initCameraFocusMode(parameters);
         parameters.set("orientation", "portrait");
         mCamera.setDisplayOrientation(0);
-        // parameters.setRecordingHint(true);
-
         mCamera.setParameters(parameters);
     }
 
@@ -298,30 +256,9 @@ public class CameraManager {
     }
 
 
-    //获取最佳高分辨率
-    private int chooseFixedPreviewFps(Camera.Parameters parms, int desiredThousandFps) {
-        List<int[]> supported = parms.getSupportedPreviewFpsRange();
-
-        for (int[] entry : supported) {
-            //Log.d(TAG, "entry: " + entry[0] + " - " + entry[1]);
-            if ((entry[0] == entry[1]) && (entry[0] == desiredThousandFps)) {
-                parms.setPreviewFpsRange(entry[0], entry[1]);
-                return entry[0];
-            }
-        }
-
-        int[] tmp = new int[2];
-        parms.getPreviewFpsRange(tmp);
-        int guess;
-        if (tmp[0] == tmp[1]) {
-            guess = tmp[0];
-        } else {
-            guess = tmp[1] / 2;     // shrug
-        }
-
-        return guess;
-    }
-
+    /**
+     * @return 是否自动对焦
+     */
     public boolean isAutoFocus() {
         return mCamera.getParameters().getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
     }
@@ -400,11 +337,11 @@ public class CameraManager {
 
 
     public int getCameraPosition() {
-        return cameraPosition;
+        return cameraSetting.cameraPosition;
     }
 
     public void setCameraPosition(int cameraPosition) {
-        this.cameraPosition = cameraPosition;
+        this.cameraSetting.cameraPosition = cameraPosition;
     }
 
     public boolean isOpenCamera() {
@@ -415,9 +352,6 @@ public class CameraManager {
         isOpenCamera = openCamera;
     }
 
-    public int getFps() {
-        return fps;
-    }
 
     public CallBackEvent getEvent() {
         return event;
@@ -427,44 +361,33 @@ public class CameraManager {
         this.event = event;
     }
 
-    public int getColorFormat() {
-        return colorFormat;
-    }
 
     public int getPhotoWidth() {
         return photoWidth;
     }
 
-    public void setPhotoWidth(int photoWidth) {
-        this.photoWidth = photoWidth;
-    }
 
     public int getPhotoHeight() {
         return photoHeight;
     }
 
-    public void setPhotoHeight(int photoHeight) {
-        this.photoHeight = photoHeight;
-    }
 
     public int getVideoWidth() {
         return videoWidth;
     }
 
-    public void setVideoWidth(int videoWidth) {
-        this.videoWidth = videoWidth;
-    }
 
     public int getVideoHeight() {
         return videoHeight;
     }
 
-    public void setVideoHeight(int videoHeight) {
-        this.videoHeight = videoHeight;
+
+    public int getRealFps() {
+        return realFps;
     }
 
-    public void setmOrientation(int mOrientation) {
-        this.mOrientation = mOrientation;
+    public CameraSetting getCameraSetting() {
+        return cameraSetting;
     }
 
     /**

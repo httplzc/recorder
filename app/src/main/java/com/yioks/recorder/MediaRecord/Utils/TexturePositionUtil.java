@@ -1,6 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
-
-import com.yioks.recorder.MediaRecord.Utils.GlUtil;
+package com.yioks.recorder.MediaRecord.Utils;
 
 import java.nio.FloatBuffer;
 

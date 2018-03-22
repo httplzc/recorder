@@ -1,4 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
+package com.yioks.recorder.MediaRecord.RecorderHelper;
 
 import android.content.Context;
 import android.media.AudioFormat;
@@ -123,7 +123,7 @@ public class RecordAudioManager {
                 audioRecord.release();
                 if (audioEncoder != null) {
                     audioEncoder.shutdown();
-                    audioEncoder.release(true);
+                    audioEncoder.release();
                     audioEncoder = null;
                 }
             } catch (IllegalStateException e) {
@@ -134,11 +134,9 @@ public class RecordAudioManager {
         }
     }
 
-    public void releaseRecord(boolean releaseData) {
+    public void releaseRecord() {
         if (audioEncoder != null) {
-            audioEncoder.release(releaseData);
-            if (releaseData)
-                audioEncoder = null;
+            audioEncoder.release();
         }
     }
 

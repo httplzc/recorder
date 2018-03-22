@@ -113,7 +113,7 @@ public class AudioEncoder {
     }
 
 
-    public void release(boolean releaseData) {
+    public void release() {
 
         if (mEncoder != null) {
             mEncoder.stop();
@@ -378,8 +378,7 @@ public class AudioEncoder {
          * Tells the Looper to quit.
          */
         private void shutdown() {
-            if (VERBOSE) Log.d(TAG, "shutdown");
-            Looper.myLooper().quit();
+            getHandler().getLooper().quit();
         }
 
 

@@ -87,13 +87,13 @@ public class VideoEncoder {
      * @param succeed
      */
     public void shutdown(boolean succeed) {
-        if (mEncoder == null)
+        if (mEncoderThread == null)
             return;
         Handler handler = mEncoderThread.getHandler();
         handler.sendMessage(handler.obtainMessage(EncoderThread.EncoderHandler.MSG_SHUTDOWN, succeed));
     }
 
-    public void release(boolean releaseData) {
+    public void release() {
         if (mEncoder != null) {
             mEncoder.stop();
             mEncoder.release();
@@ -202,6 +202,7 @@ public class VideoEncoder {
                         break;
                 } catch (Exception e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         }
@@ -266,7 +267,7 @@ public class VideoEncoder {
          */
         private void shutdown() {
             if (VERBOSE) Log.d(TAG, "shutdown");
-            Looper.myLooper().quit();
+            getHandler().getLooper().quit();
         }
 
 

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.opengl.GLES11Ext;
 
 import com.yioks.recorder.MediaRecord.Utils.StringManagerUtil;
-import com.yioks.recorder.MediaRecord.RenderHelper.TexturePositionUtil;
+import com.yioks.recorder.MediaRecord.Utils.TexturePositionUtil;
 import com.yioks.recorder.R;
 
 import java.nio.FloatBuffer;

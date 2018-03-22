@@ -1,4 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
+package com.yioks.recorder.MediaRecord.RecorderHelper;
 
 import android.content.Context;
 import android.media.MediaFormat;
@@ -92,17 +92,15 @@ public class RecordVideoManager {
             return;
         if (videoEncoder != null) {
             videoEncoder.shutdown(false);
-            videoEncoder.release(true);
+            videoEncoder.release();
             videoEncoder = null;
         }
         is_record = false;
     }
 
-    public void releaseRecord(boolean releaseData) {
+    public void releaseRecord() {
         if (videoEncoder != null) {
-            videoEncoder.release(releaseData);
-            if (releaseData)
-                videoEncoder = null;
+            videoEncoder.release();
         }
     }
 

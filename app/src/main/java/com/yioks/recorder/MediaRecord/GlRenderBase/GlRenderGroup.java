@@ -17,7 +17,7 @@ public abstract class GlRenderGroup implements GlRender {
     // 显示输出的宽高
     protected int mDisplayWidth;
     protected int mDisplayHeight;
-    protected List<GlRenderNormal> mFilters = new ArrayList<GlRenderNormal>();
+    protected List<GlRenderNormal> mFilters = new ArrayList<>();
     protected Context context;
 
 

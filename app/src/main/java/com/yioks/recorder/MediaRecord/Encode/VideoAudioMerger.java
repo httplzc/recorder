@@ -35,12 +35,11 @@ public class VideoAudioMerger {
     private static final int MSG_Work_End = 2;
     private static final int MSG_Work_Frame = 0;
 
-
-    public VideoAudioMerger(File file, CallBack callBack) {
-        this.callBack = callBack;
+    public VideoAudioMerger(File file) {
         this.file = file;
-        callBackhandler = new CallBackHandler(this);
     }
+
+
 
     public boolean initCompoundVideo() {
         try {
@@ -135,8 +134,7 @@ public class VideoAudioMerger {
 
 
         public void shutdown() {
-            if (Looper.myLooper() != null)
-                Looper.myLooper().quit();
+           getHandler().getLooper().quit();
         }
 
         /**
@@ -263,6 +261,7 @@ public class VideoAudioMerger {
     }
 
 
+
     public interface CallBack {
         void compoundFail(String msg);
 
@@ -275,5 +274,6 @@ public class VideoAudioMerger {
 
     public void setCallBack(CallBack callBack) {
         this.callBack = callBack;
+        callBackhandler=new CallBackHandler(this);
     }
 }

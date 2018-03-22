@@ -35,15 +35,15 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:27.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    implementation 'com.android.support:support-annotations:27.0.2'
 }
 ext {
     PUBLISH_GROUP_ID = "com.yioks.lzc_recorder"
     PUBLISH_ARTIFACT_ID = "lzc_recorder"
-    PUBLISH_VERSION = "1.0.0"
+    PUBLISH_VERSION = "1.0.1"
 }
 
 uploadArchives {

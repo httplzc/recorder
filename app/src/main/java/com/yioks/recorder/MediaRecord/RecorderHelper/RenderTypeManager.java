@@ -1,4 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
+package com.yioks.recorder.MediaRecord.RecorderHelper;
 
 import android.content.Context;
 

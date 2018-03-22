@@ -1,4 +1,4 @@
-package com.yioks.recorder.MediaRecord.RenderHelper;
+package com.yioks.recorder.MediaRecord.RecorderHelper;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -65,7 +65,7 @@ public class GlRenderManager {
         private WeakReference<GlRenderManager> glRenderManagerRef;
 
         TakePhotoTask(GlRenderManager glRenderManager) {
-            glRenderManagerRef = new WeakReference<GlRenderManager>(glRenderManager);
+            glRenderManagerRef = new WeakReference<>(glRenderManager);
         }
 
         @Override
@@ -83,8 +83,7 @@ public class GlRenderManager {
         }
 
         @Override
-        protected void onPostExecute(Bitmap o) {
-            Bitmap bitmap = (Bitmap) o;
+        protected void onPostExecute(Bitmap bitmap) {
             if (glRenderManagerRef != null && glRenderManagerRef.get() != null && glRenderManagerRef.get().glBackBitmap != null) {
                 glRenderManagerRef.get().glBackBitmap.onFinish(bitmap);
             } else
