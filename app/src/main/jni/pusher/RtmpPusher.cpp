@@ -82,9 +82,11 @@ int64_t getCurrentTime()      //直接调用这个函数就行了，返回值最
  * @param args
  * @return
  */
+//int64_t time1 = 0;
+//int count = 0;
 void *RtmpPusher::rtmpPushThread(void *args) {
     RtmpPusher *pusher = (RtmpPusher *) args;
-
+    //time1 = getCurrentTime();
     while (pusher->isPushing()) {
         pthread_mutex_lock(&pusher->mutex);
         pthread_cond_wait(&pusher->cond, &pusher->mutex);
@@ -108,6 +110,12 @@ void *RtmpPusher::rtmpPushThread(void *args) {
             RTMPPacket *packet = packets[i];
             if (packet) {
                 if (RTMP_SendPacket(pusher->rtmpPusher, packet, TRUE)) {
+//                    int64_t  time2=getCurrentTime();
+//                    if (time2 - time1 > 1000) {
+//                        ALOGI("sendCount %d", count);
+//                        count = 0;
+//                        time1=getCurrentTime();
+//                    }
                     ALOGI("RTMP_SendPacket success! %d", queue_size());
                 } else {
                     ALOGI("RTMP_SendPacket failed!");

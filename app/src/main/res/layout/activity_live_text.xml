@@ -13,12 +13,7 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true">
 
-        <EditText
-            android:id="@+id/push_url"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:textSize="12sp"
-            android:textColor="@android:color/holo_red_light"/>
+
 
         <SurfaceView
             android:id="@+id/surface_view"
@@ -26,6 +21,13 @@
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
             android:layout_gravity="center"/>
+
+        <EditText
+            android:id="@+id/push_url"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:textSize="12sp"
+            android:textColor="@android:color/holo_red_light"/>
 
     </FrameLayout>
 

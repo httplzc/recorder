@@ -51,8 +51,8 @@ public class LiveTextActivity extends Activity {
     private SurfaceHolder holder;
     private LiveManager recorder;
 
-    private final static int TargetLongWidth = 1280;
-    private int TargetShortWidth = 720;
+    private final static int TargetLongWidth = 1920;
+    private int TargetShortWidth = 1080;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +123,7 @@ public class LiveTextActivity extends Activity {
             public void openCameraSuccess(int i) {
                 recorder.getRecordSetting().setVideoSetting(TargetShortWidth, TargetLongWidth,
                         recorder.getCameraManager().getRealFps() / 1000, RecordSetting.ColorFormatDefault);
-                recorder.getRecordSetting().setVideoBitRate(2000 * 1024);
+                recorder.getRecordSetting().setVideoBitRate(3000 * 1024);
                 recorder.switchOnBeauty(i == 1);
             }
 

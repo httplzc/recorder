@@ -1423,11 +1423,7 @@ WriteN(RTMP *r, const char *buffer, int n) {
         if (r->Link.protocol & RTMP_FEATURE_HTTP)
             nBytes = HTTP_Post(r, RTMPT_SEND, ptr, n);
         else {
-            int count = 0;
-            do {
-                count++;
-                nBytes = RTMPSockBuf_Send(&r->m_sb, ptr, n);
-            } while (nBytes < 0 && count < 2);
+            nBytes = RTMPSockBuf_Send(&r->m_sb, ptr, n);
 
             /*RTMP_Log(RTMP_LOGDEBUG, "%s: %d\n", __FUNCTION__, nBytes); */
         }
@@ -1440,8 +1436,12 @@ WriteN(RTMP *r, const char *buffer, int n) {
 
             if (sockerr == EINTR && !RTMP_ctrlC)
                 continue;
-            if(sockerr==ETIMEOUT)
+            if (sockerr == ETIMEOUT)
                 break;
+            if (sockerr == EAGAIN) {
+                usleep(1000);
+                continue;
+            }
 
             RTMP_Close(r);
             n = 1;
