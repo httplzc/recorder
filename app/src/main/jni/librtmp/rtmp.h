@@ -59,6 +59,7 @@ extern "C"
 #define RTMP_PROTOCOL_RTMFP     RTMP_FEATURE_MFP
 
 #define RTMP_DEFAULT_CHUNKSIZE	128
+#define RTMP_DEFAULT_CHUNKSIZE_OUT	256
 
 /* needs to fit largest number of bytes recv() may return */
 #define RTMP_BUFFER_CACHE_SIZE (16*1024)
@@ -112,6 +113,10 @@ extern "C"
 
   typedef struct RTMPPacket
   {
+      //附加
+      uint8_t is_video;
+      uint8_t is_key;
+      //原始
     uint8_t m_headerType;
     uint8_t m_packetType;
     uint8_t m_hasAbsTimestamp;	/* timestamp absolute or relative? */

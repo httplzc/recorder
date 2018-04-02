@@ -73,7 +73,7 @@ public class LiveTextActivity extends Activity {
         CameraSetting cameraSetting = new CameraSetting();
         cameraSetting.fps = 30;
         cameraSetting.cameraPosition = 0;
-        push_url.setText("rtmp://video-center-bj.alivecdn.com/AppName/StreamName?vhost=yioks-live-dev.yioks.com&auth_key=1522324126-0-0-3c680e231d2e7980ed8e75680d5332f5");
+        push_url.setText("rtmp://video-center-bj.alivecdn.com/AppName/StreamName?vhost=yioks-live-dev.yioks.com&auth_key=1522392582-0-0-072b19ed10bd184474c34010a5e10bdd");
         RenderSetting renderSetting = new RenderSetting();
         recorder = new LiveManager(this, recordSetting, cameraSetting, renderSetting, surfaceView);
         recorder.setPushCallBack(new PushManager.CallBack() {
@@ -123,7 +123,7 @@ public class LiveTextActivity extends Activity {
             public void openCameraSuccess(int i) {
                 recorder.getRecordSetting().setVideoSetting(TargetShortWidth, TargetLongWidth,
                         recorder.getCameraManager().getRealFps() / 1000, RecordSetting.ColorFormatDefault);
-                recorder.getRecordSetting().setVideoBitRate(3000 * 1024);
+                recorder.getRecordSetting().setVideoBitRate(5000 * 1024);
                 recorder.switchOnBeauty(i == 1);
             }
 

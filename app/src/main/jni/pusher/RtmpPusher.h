@@ -15,6 +15,7 @@
 #include "android/log.h"
 #include <pthread.h>
 #include <malloc.h>
+#include <pushUtil.h>
 
 
 #endif //YIOKS_RECORD_RTMPPUSHER_H

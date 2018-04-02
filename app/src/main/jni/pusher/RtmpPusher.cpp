@@ -71,12 +71,7 @@ int RtmpPusher::reConnect() {
 }
 
 
-int64_t getCurrentTime()      //直接调用这个函数就行了，返回值最好是int64_t，long long应该也可以
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);    //该函数在sys/time.h头文件中
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
+
 /**
  * 推流线程
  * @param args
@@ -86,7 +81,7 @@ int64_t getCurrentTime()      //直接调用这个函数就行了，返回值最
 //int count = 0;
 void *RtmpPusher::rtmpPushThread(void *args) {
     RtmpPusher *pusher = (RtmpPusher *) args;
-    //time1 = getCurrentTime();
+
     while (pusher->isPushing()) {
         pthread_mutex_lock(&pusher->mutex);
         pthread_cond_wait(&pusher->cond, &pusher->mutex);
@@ -107,28 +102,22 @@ void *RtmpPusher::rtmpPushThread(void *args) {
         pthread_mutex_unlock(&pusher->mutex);
         // 发送RTMP包，推流操作
         for (int i = 0; i < size; i++) {
+            int64_t time1 = getCurrentTime();
             RTMPPacket *packet = packets[i];
             if (packet) {
                 if (RTMP_SendPacket(pusher->rtmpPusher, packet, TRUE)) {
-//                    int64_t  time2=getCurrentTime();
+                    int64_t time2 = getCurrentTime();
 //                    if (time2 - time1 > 1000) {
 //                        ALOGI("sendCount %d", count);
 //                        count = 0;
 //                        time1=getCurrentTime();
 //                    }
-                    ALOGI("RTMP_SendPacket success! %d", queue_size());
+                    ALOGI("RTMP_SendPacket success! %d   %d", queue_size(), (time2 - time1));
                 } else {
                     ALOGI("RTMP_SendPacket failed!");
                 }
                 RTMPPacket_Free(packet);
             }
-        }
-        // 丢包操作
-        if (queue_size() > 50) {
-            for (int i = 0; i < 25; i++) {
-                queue_remove();
-            }
-            pusher->backLost();
         }
     }
     // 如果请求停止操作，则释放RTMP等资源，以防内存泄漏
@@ -169,6 +158,16 @@ void RtmpPusher::rtmpPacketPush(RTMPPacket *packet) {
         ALOGI("推流超时");
         backFail();
         return;
+    }
+        // 丢包操作
+    else if (queue_size() > 50) {
+        for (int i = 0; i < 25; i++) {
+            RTMPPacket *temp = (RTMPPacket *) queue_get(i);
+            if (temp->is_video && temp->is_key)
+                continue;
+            queue_delete(i);
+        }
+        backLost();
     }
     queue_put_tail(packet);
     pthread_cond_signal(&cond);
@@ -229,6 +228,9 @@ void RtmpPusher::pushVideoFrame(char *buf, int len, long time) {
     body[k++] = (char) (len & 0xff);
 
     memcpy(&body[k++], buf, (size_t) len);
+    packet->is_video = 1;
+    packet->is_key = videoFrameIsKey(buf);
+    ALOGI("isKeyFrame   %d",packet->is_key);
     packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
     packet->m_nBodySize = (uint32_t) body_size;
     packet->m_nChannel = STREAM_CHANNEL_VIDEO;
@@ -327,6 +329,8 @@ void RtmpPusher::pushAudioFrame(char *buffer, int length, long time) {
     body[0] = (char) 0xaf;
     body[1] = 0x01;
     memcpy(&body[2], buffer, (size_t) length);
+    packet->is_video = 0;
+    packet->is_key = 0;
     packet->m_packetType = RTMP_PACKET_TYPE_AUDIO;
     packet->m_nBodySize = (uint32_t) body_size;
     packet->m_nChannel = STREAM_CHANNEL_AUDIO;

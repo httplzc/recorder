@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.media.MediaFormat;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.SurfaceView;
 
 import com.yioks.recorder.Bean.CameraSetting;
@@ -78,16 +77,8 @@ public class LiveManager extends RecordManageBase {
             callBackEvent.recordError("推流地址错误！");
     }
 
-    int count=0;
     @Override
     protected void onFrameAvailable(DataType type, MediaFrameData frameData) {
-        count++;
-        if(System.currentTimeMillis()-time>1000)
-        {
-            Log.i("lzc","prrduce  "+count);
-            count=0;
-            time=System.currentTimeMillis();
-        }
         if (!isRecord)
             return;
         if (type == DataType.Type_Audio) {
@@ -96,10 +87,8 @@ public class LiveManager extends RecordManageBase {
             pusherManager.pushVideoFrame(frameData.getmDataBuffer(), frameData.getInfo().presentationTimeUs);
         }
     }
-    long time=0;
     @Override
     protected int onFormatConfirm(DataType type, MediaFormat mediaFormat) {
-        time=System.currentTimeMillis();
         if (ignoreFormat)
             return type.ordinal();
         if (type == DataType.Type_Audio) {
