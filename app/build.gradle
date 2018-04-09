@@ -1,5 +1,5 @@
-apply plugin: 'com.android.library'
-//apply plugin: 'com.android.application'
+//apply plugin: 'com.android.library'
+apply plugin: 'com.android.application'
 apply plugin: 'maven'
 
 android {
@@ -45,7 +45,7 @@ dependencies {
 ext {
     PUBLISH_GROUP_ID = "com.yioks.lzc_recorder"
     PUBLISH_ARTIFACT_ID = "lzc_recorder"
-    PUBLISH_VERSION = "1.1.1"
+    PUBLISH_VERSION = "1.1.2"
 }
 
 uploadArchives {

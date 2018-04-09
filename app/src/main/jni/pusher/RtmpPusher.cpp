@@ -230,7 +230,6 @@ void RtmpPusher::pushVideoFrame(char *buf, int len, long time) {
     memcpy(&body[k++], buf, (size_t) len);
     packet->is_video = 1;
     packet->is_key = videoFrameIsKey(buf);
-    ALOGI("isKeyFrame   %d",packet->is_key);
     packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
     packet->m_nBodySize = (uint32_t) body_size;
     packet->m_nChannel = STREAM_CHANNEL_VIDEO;

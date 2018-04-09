@@ -32,13 +32,18 @@ public class GlRenderImg {
 
     private FloatBuffer createVerticalPosition(float width, float height, float positionX, float positionY) {
         return GlUtil.createFloatBuffer(new float[]{
-                -1 + positionY * 2, 1 - positionX * 2 - width * 2,
                 -1 + positionY * 2 + height * 2, 1 - positionX * 2 - width * 2,
-                -1 + positionY * 2, 1 - positionX * 2,
+                -1 + positionY * 2, 1 - positionX * 2 - width * 2,
                 -1 + positionY * 2 + height * 2, 1 - positionX * 2,
+                -1 + positionY * 2, 1 - positionX * 2,
 
         });
     }
+
+//       -1 + positionY * 2, 1 - positionX * 2 - width * 2,
+//            -1 + positionY * 2 + height * 2, 1 - positionX * 2 - width * 2,
+//            -1 + positionY * 2, 1 - positionX * 2,
+//            -1 + positionY * 2 + height * 2, 1 - positionX * 2,
 
     /**
      * @param verticalWidth  1-0  1为屏幕大小

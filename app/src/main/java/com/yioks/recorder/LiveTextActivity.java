@@ -67,7 +67,7 @@ public class LiveTextActivity extends Activity {
         this.btn4 = (Button) findViewById(R.id.btn4);
         this.btn5 = (Button) findViewById(R.id.btn5);
         this.btn6 = (Button) findViewById(R.id.btn6);
-        push_url=findViewById(R.id.push_url);
+        push_url = findViewById(R.id.push_url);
         this.surfaceView = findViewById(R.id.surface_view);
         RecordSetting recordSetting = new RecordSetting();
         CameraSetting cameraSetting = new CameraSetting();
@@ -123,7 +123,7 @@ public class LiveTextActivity extends Activity {
             public void openCameraSuccess(int i) {
                 recorder.getRecordSetting().setVideoSetting(TargetShortWidth, TargetLongWidth,
                         recorder.getCameraManager().getRealFps() / 1000, RecordSetting.ColorFormatDefault);
-                recorder.getRecordSetting().setVideoBitRate(5000 * 1024);
+                recorder.getRecordSetting().setVideoBitRate(3000 * 1024);
                 recorder.switchOnBeauty(i == 1);
             }
 
@@ -209,8 +209,6 @@ public class LiveTextActivity extends Activity {
                 GlRenderImg glRenderImg = new GlRenderImg(bitmap);
                 glRenderImg.initVerticalPosition(bitmap.getWidth() / (float) surfaceView.getWidth(),
                         bitmap.getHeight() / (float) surfaceView.getHeight(), 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
-//        glRenderImg.initVerticalPosition(0.5f,
-//                0.5f, 0, 0);
                 glRenderImg.initHorizontalPosition(bitmap.getWidth() / (float) TargetLongWidth,
                         bitmap.getHeight() / (float) TargetShortWidth, 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
 
