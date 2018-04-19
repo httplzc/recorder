@@ -5,7 +5,6 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.util.DisplayMetrics;
 import android.view.Surface;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
@@ -223,10 +222,13 @@ public abstract class RecordManageBase {
     private void changeSurfaceSize(int width, int height, boolean canOutSide) {
         int newWidth = 0;
         int newHeight = 0;
-        DisplayMetrics metric = new DisplayMetrics();
-        context.getWindowManager().getDefaultDisplay().getRealMetrics(metric);
-        int screenWidth = metric.widthPixels;
-        int screenHeight = metric.heightPixels;
+        int screenWidth = surfaceView.getWidth();
+        int screenHeight = surfaceView.getHeight();
+        if (screenWidth > screenHeight) {
+            int temp = width;
+            width = height;
+            height = temp;
+        }
         if ((width == -1 && height == -1) || (width == screenWidth && height == screenHeight)) {
             newHeight = FrameLayout.LayoutParams.MATCH_PARENT;
             newWidth = FrameLayout.LayoutParams.MATCH_PARENT;
@@ -375,13 +377,10 @@ public abstract class RecordManageBase {
 
     //一帧准备完毕
     private void callFrameAvailable() {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (glRenderManager == null)
-                    return;
-                callDrawFrame();
-            }
+        handler.post(() -> {
+            if (glRenderManager == null)
+                return;
+            callDrawFrame();
         });
     }
 
@@ -507,5 +506,9 @@ public abstract class RecordManageBase {
 
     public RenderSetting getRenderSetting() {
         return renderSetting;
+    }
+
+    public void changeScreenOrientation(boolean portrait) {
+        glRenderManager.setCameraRotate(portrait ? 0 : -90);
     }
 }

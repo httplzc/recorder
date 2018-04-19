@@ -57,6 +57,7 @@ public class GlRenderManager {
 
     private GlBackBitmap glBackBitmap;
 
+
     //是否拍照状态
     private boolean takePhoto = false;
 
@@ -273,5 +274,9 @@ public class GlRenderManager {
 
     public void setTakePhoto(boolean takePhoto) {
         this.takePhoto = takePhoto;
+    }
+
+    public void setCameraRotate(int cameraRotate) {
+        displayRenderGroup.setCameraRotate(cameraRotate);
     }
 }

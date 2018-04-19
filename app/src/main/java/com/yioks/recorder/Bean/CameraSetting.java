@@ -31,4 +31,6 @@ public class CameraSetting {
     public SurfaceTexture surfaceTexture;
     //显示区域holder
     public SurfaceHolder surfaceHolder;
+    //旋转角度
+    public int cameraRotate=0;
 }

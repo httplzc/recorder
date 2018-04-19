@@ -36,9 +36,17 @@ public class LiveManager extends RecordManageBase {
 
     @Override
     public void startRecord() {
+        if (status == Status.RECORD)
+            return;
         super.startRecord();
-        ignoreFormat = false;
-        onRecordStart();
+        if (status == Status.PAUSE) {
+            ignoreFormat = true;
+            status = Status.RECORD;
+        } else {
+            ignoreFormat = false;
+            onRecordStart();
+        }
+
     }
 
     private void onRecordStart() {
@@ -87,6 +95,7 @@ public class LiveManager extends RecordManageBase {
             pusherManager.pushVideoFrame(frameData.getmDataBuffer(), frameData.getInfo().presentationTimeUs);
         }
     }
+
     @Override
     protected int onFormatConfirm(DataType type, MediaFormat mediaFormat) {
         if (ignoreFormat)
@@ -137,10 +146,8 @@ public class LiveManager extends RecordManageBase {
     public void init() {
         super.init();
         if (status == Status.PAUSE) {
-            status = Status.RECORD;
             if (cameraManager.isOpenCamera()) {
-                super.startRecord();
-                ignoreFormat = true;
+                startRecord();
             }
         }
 

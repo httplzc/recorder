@@ -33,4 +33,7 @@ public class GlDisplayGroup extends GlRenderGroup {
         }
     }
 
+    public void setCameraRotate(int cameraRotate) {
+        glRenderCamera.setRotate(cameraRotate);
+    }
 }

@@ -153,12 +153,18 @@ public class CameraManager {
     }
 
     public void switchCamera() {
-        if (!isOpenCamera || Camera.getNumberOfCameras() <= 1) {
+        if (Camera.getNumberOfCameras() <= 1)
             return;
-        }
         cameraSetting.cameraPosition = cameraSetting.cameraPosition == 1 ? 0 : 1;
+        if (!isOpenCamera)
+            return;
         initCamera();
     }
+
+//    public void changeCameraRotate(int cameraRotate) {
+//        cameraSetting.cameraRotate = cameraRotate;
+//        mCamera.setDisplayOrientation(cameraRotate);
+//    }
 
 
     /**
@@ -226,7 +232,7 @@ public class CameraManager {
         //设置对焦模式
         initCameraFocusMode(parameters);
         parameters.set("orientation", "portrait");
-        mCamera.setDisplayOrientation(0);
+        mCamera.setDisplayOrientation(cameraSetting.cameraRotate);
         mCamera.setParameters(parameters);
     }
 
@@ -274,17 +280,19 @@ public class CameraManager {
     public void focusToRect(Rect rect, int width, int height) {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Area> areaList = new ArrayList<>();
-        rect = calcFocus(rect, videoHeight, videoWidth, width, height);
+        rect = calcFocus(rect, videoWidth, videoHeight, width, height);
         areaList.clear();
-        areaList.add(new Camera.Area(new Rect(rect.top, rect.left, rect.bottom, rect.right), 600));
+        areaList.add(new Camera.Area(rect, 800));
         int maxMeteringAreas = mCamera.getParameters().getMaxNumMeteringAreas();
         int maxFocusAreas = mCamera.getParameters().getMaxNumFocusAreas();
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         parameters.setFocusAreas(areaList);
         parameters.setMeteringAreas(areaList);
 
         try {
             mCamera.setParameters(parameters);
-            mCamera.autoFocus(null);
+            mCamera.autoFocus((boolean success, Camera camera) -> {
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -292,7 +300,7 @@ public class CameraManager {
 
 
     //计算对焦区域  坐标映射
-    private Rect calcFocus(Rect rectOr, float cameraVideoWidth, float cameraVideoHeight, int screenWidth, int screenHeight) {
+    private Rect calcFocus(Rect rectOr, int cameraVideoWidth, int cameraVideoHeight, int screenWidth, int screenHeight) {
 
         if (rectOr.left < 0)
             rectOr.left = 0;
@@ -303,17 +311,31 @@ public class CameraManager {
         if (rectOr.bottom > screenHeight)
             rectOr.bottom = screenHeight;
 
+        if (screenWidth > screenHeight) {
+            int temp = cameraVideoWidth;
+            cameraVideoWidth = cameraVideoHeight;
+            cameraVideoHeight = temp;
+        }
 
-        rectOr.left *= cameraVideoHeight / screenWidth;
-        rectOr.right *= cameraVideoHeight / screenWidth;
-        rectOr.top *= cameraVideoWidth / screenHeight;
-        rectOr.bottom *= cameraVideoWidth / screenHeight;
+        //映射为实际视频坐标
+        rectOr.left *= cameraVideoWidth / screenWidth;
+        rectOr.right *= cameraVideoWidth / screenWidth;
+        rectOr.top *= cameraVideoHeight / screenHeight;
+        rectOr.bottom *= cameraVideoHeight / screenHeight;
 
+        //映射为对焦坐标
+        rectOr.left = (int) (2000f / cameraVideoWidth * rectOr.left - 1000f);
+        rectOr.right = (int) (2000f / cameraVideoWidth * rectOr.right - 1000f);
+        rectOr.bottom = (int) (2000f / cameraVideoHeight * rectOr.bottom - 1000f);
+        rectOr.top = (int) (2000f / cameraVideoHeight * rectOr.top - 1000f);
 
-        rectOr.left = (int) (2000f / cameraVideoHeight * rectOr.left - 1000f);
-        rectOr.right = (int) (2000f / cameraVideoHeight * rectOr.right - 1000f);
-        rectOr.bottom = (int) (2000f / cameraVideoWidth * rectOr.bottom - 1000f);
-        rectOr.top = (int) (2000f / cameraVideoWidth * rectOr.top - 1000f);
+        if (screenWidth < screenHeight) {
+//            rectOr = new Rect(-rectOr.bottom, rectOr.left, -rectOr.top, rectOr.right);
+            rectOr = new Rect(rectOr.top, -rectOr.right,rectOr.bottom, -rectOr.left);
+
+        }
+
+        //校验是否超过最大值或小于最小值
         if (rectOr.left <= -1000)
             rectOr.left = -1000;
         if (rectOr.right >= 1000)
@@ -322,7 +344,7 @@ public class CameraManager {
             rectOr.top = -1000;
         if (rectOr.bottom >= 1000)
             rectOr.bottom = 1000;
-        return new Rect(rectOr);
+        return rectOr;
     }
 
     private boolean checkCameraHardware(Context context) {

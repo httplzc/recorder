@@ -252,7 +252,7 @@ public class LiveTextActivity extends Activity {
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width,
                                    int height) {
-            recorder.getRenderSetting().setRenderSize(TargetShortWidth, TargetLongWidth);
+            recorder.getRenderSetting().setRenderSize(width < height ? TargetShortWidth : TargetLongWidth, width < height ? TargetLongWidth : TargetShortWidth);
             recorder.getRenderSetting().setDisplaySize(width, height);
         }
 
