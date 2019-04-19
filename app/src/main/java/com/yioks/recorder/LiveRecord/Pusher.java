@@ -16,24 +16,33 @@ public class Pusher {
 
     public native void pushVideoFormat(byte[] pps, byte[] sps);
 
-    public native void pushVideoFrame(byte[] data,long time);
+    public native void pushVideoFrame(byte[] data, long time);
 
-    public native void pushAudioFrame(byte[] data,long time);
+    public native void pushAudioFrame(byte[] data, long time);
 
     public native void stop();
 
-    public native int start(String url);
+    public native void start(String url);
 
-    public  void fail()
-    {
-        if(callback!=null)
+    public native void pause();
+
+    public native void resume();
+
+    public void fail() {
+        if (callback != null)
             callback.fail();
     }
 
-    public void lostPack()
-    {
-        if(callback!=null)
-            callback.lostPack();;
+    public void lostPack() {
+        if (callback != null)
+            callback.lostPack();
+        ;
+    }
+
+    public void connect() {
+        if (callback != null)
+            callback.connect();
+        ;
     }
 
     public void setCallBack(Callback callback) {
@@ -44,6 +53,8 @@ public class Pusher {
         void fail();
 
         void lostPack();
+
+        void connect();
     }
 
 }

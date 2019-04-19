@@ -25,12 +25,20 @@ public class PushManager {
     private final static int PushVideoFormat = 4;
     private final static int PushAudioFormat = 5;
 
+    private final static int PushPause = 6;
+    private final static int PushResume = 7;
 
-    private final static int CallBackStartSucceed = 0;
+
+    private final static int CallBackConnect = 0;
     private final static int CallBackFail = 1;
     private final static int CallBackBusy = 2;
 
-    private boolean isStop=true;
+    public enum PushStatus {
+        UnPush, Push, Pause, Connecting
+    }
+
+    private PushStatus pushStatus = PushStatus.UnPush;
+
 
     private CallBack callBack;
 
@@ -40,6 +48,7 @@ public class PushManager {
         pusher.setCallBack(new Pusher.Callback() {
             @Override
             public void fail() {
+                pushStatus = PushStatus.UnPush;
                 callBackHandler.sendMessage(Message.obtain(callBackHandler, CallBackFail));
             }
 
@@ -47,23 +56,43 @@ public class PushManager {
             public void lostPack() {
                 callBackHandler.sendMessage(Message.obtain(callBackHandler, CallBackBusy));
             }
+
+            @Override
+            public void connect() {
+                pushStatus = PushStatus.Push;
+                callBackHandler.sendMessage(Message.obtain(callBackHandler, CallBackConnect));
+            }
         });
         this.pushThread = new HandlerThread("pushThread");
         pushThread.start();
-        isStop=false;
         pushHandler = new PushHandler(pushThread.getLooper(), this);
         callBackHandler = new CallBackHandler(this);
     }
 
 
+    public void pause() {
+        if (pushStatus == PushStatus.Pause || pushStatus == PushStatus.UnPush)
+            return;
+        pushStatus = PushStatus.Pause;
+        pushHandler.sendMessage(Message.obtain(pushHandler, PushPause));
+    }
+
+    private void resume() {
+        if (pushStatus != PushStatus.Pause)
+            return;
+        pushStatus = PushStatus.Connecting;
+        pushHandler.sendMessage(Message.obtain(pushHandler, PushResume));
+    }
+
+
     public void pushAudioFormat(byte[] data) {
-        if(isStop)
+        if (pushStatus == PushStatus.Pause || pushStatus == PushStatus.UnPush)
             return;
         pushHandler.sendMessage(Message.obtain(pushHandler, PushAudioFormat, data));
     }
 
     public void pushVideoFormat(byte[] pps, byte[] sps) {
-        if(isStop)
+        if (pushStatus == PushStatus.Pause || pushStatus == PushStatus.UnPush)
             return;
         byte data[][] = new byte[2][];
         data[0] = pps;
@@ -72,40 +101,48 @@ public class PushManager {
     }
 
     public void pushVideoFrame(byte[] data, long presentationTimeUs) {
-        if(isStop)
+        if (pushStatus == PushStatus.Pause || pushStatus == PushStatus.UnPush)
             return;
-        Object[]objects=new Object[2];
-        objects[0]=data;
-        objects[1]=presentationTimeUs;
+        Object[] objects = new Object[2];
+        objects[0] = data;
+        objects[1] = presentationTimeUs;
         pushHandler.sendMessage(Message.obtain(pushHandler, PushVideoFrame, objects));
     }
 
     public void pushAudioFrame(byte[] data, long presentationTimeUs) {
-        if(isStop)
+        if (pushStatus == PushStatus.Pause || pushStatus == PushStatus.UnPush)
             return;
-        Object[]objects=new Object[2];
-        objects[0]=data;
-        objects[1]=presentationTimeUs;
+        Object[] objects = new Object[2];
+        objects[0] = data;
+        objects[1] = presentationTimeUs;
         pushHandler.sendMessage(Message.obtain(pushHandler, PushAudioFrame, objects));
     }
 
     public void stop() {
-        if(isStop)
+        if (pushStatus == PushStatus.UnPush)
             return;
         pushHandler.sendMessage(Message.obtain(pushHandler, PushStop));
-        callBack=null;
-        isStop=true;
+        callBack = null;
+        pushStatus = PushStatus.UnPush;
     }
 
     public void start() {
-        pushHandler.sendMessage(Message.obtain(pushHandler, PushStart, pushUrl));
+        if (pushStatus == PushStatus.Pause) {
+            resume();
+            return;
+        }
+        if (pushStatus != PushStatus.Connecting) {
+            pushStatus = PushStatus.Connecting;
+            pushHandler.sendMessage(Message.obtain(pushHandler, PushStart, pushUrl));
+        }
+
     }
 
     private static class PushHandler extends Handler {
         private WeakReference<PushManager> weakReference;
 
 
-        public PushHandler(Looper looper, PushManager pushManager) {
+        PushHandler(Looper looper, PushManager pushManager) {
             super(looper);
             weakReference = new WeakReference<PushManager>(pushManager);
         }
@@ -118,23 +155,19 @@ public class PushManager {
             CallBackHandler callbackHandler = pushManager.callBackHandler;
             switch (msg.what) {
                 case PushStart:
-                    int result = pushManager.pusher.start((String) msg.obj);
-                    if (result == 0)
-                        sendSucceed();
-                    else
-                        sendFail();
+                    pushManager.pusher.start((String) msg.obj);
                     break;
                 case PushStop:
                     pushManager.pusher.stop();
                     pushManager.pushThread.quitSafely();
                     break;
                 case PushVideoFrame:
-                    Object objectsVideo[]= (Object[]) msg.obj;
-                    pushManager.pusher.pushVideoFrame((byte[]) objectsVideo[0],(long)objectsVideo[1]);
+                    Object objectsVideo[] = (Object[]) msg.obj;
+                    pushManager.pusher.pushVideoFrame((byte[]) objectsVideo[0], (long) objectsVideo[1]);
                     break;
                 case PushAudioFrame:
-                    Object objectsAudio[]= (Object[]) msg.obj;
-                    pushManager.pusher.pushAudioFrame((byte[])objectsAudio[0],(long) objectsAudio[1]);
+                    Object objectsAudio[] = (Object[]) msg.obj;
+                    pushManager.pusher.pushAudioFrame((byte[]) objectsAudio[0], (long) objectsAudio[1]);
                     break;
                 case PushVideoFormat:
                     byte array[][] = (byte[][]) msg.obj;
@@ -143,41 +176,21 @@ public class PushManager {
                 case PushAudioFormat:
                     pushManager.pusher.pushAudioFormat((byte[]) msg.obj);
                     break;
+                case PushPause:
+                    pushManager.pusher.pause();
+                    break;
+                case PushResume:
+                    pushManager.pusher.resume();
+                    break;
             }
             super.handleMessage(msg);
-        }
-
-
-        private void sendSucceed() {
-            PushManager pushManager = weakReference.get();
-            if (pushManager == null)
-                return;
-            CallBackHandler callbackHandler = pushManager.callBackHandler;
-            callbackHandler.sendMessage(Message.obtain(callbackHandler, CallBackStartSucceed));
-        }
-
-        private void sendFail() {
-            PushManager pushManager = weakReference.get();
-            if (pushManager == null)
-                return;
-            CallBackHandler callbackHandler = pushManager.callBackHandler;
-            callbackHandler.sendMessage(Message.obtain(callbackHandler, CallBackFail));
-
-        }
-
-        private void sendBusy() {
-            PushManager pushManager = weakReference.get();
-            if (pushManager == null)
-                return;
-            CallBackHandler callbackHandler = pushManager.callBackHandler;
-            callbackHandler.sendMessage(Message.obtain(callbackHandler, CallBackBusy));
         }
     }
 
     private static class CallBackHandler extends Handler {
         private WeakReference<PushManager> weakReference;
 
-        public CallBackHandler(PushManager pushManager) {
+        CallBackHandler(PushManager pushManager) {
             weakReference = new WeakReference<PushManager>(pushManager);
         }
 
@@ -190,8 +203,8 @@ public class PushManager {
             if (callBack == null)
                 return;
             switch (msg.what) {
-                case CallBackStartSucceed:
-                    callBack.startSucceed();
+                case CallBackConnect:
+                    callBack.connect();
                     break;
                 case CallBackFail:
                     callBack.fail();
@@ -205,7 +218,7 @@ public class PushManager {
     }
 
     public interface CallBack {
-        void startSucceed();
+        void connect();
 
         void fail();
 
@@ -216,4 +229,10 @@ public class PushManager {
     public void setCallBack(CallBack callBack) {
         this.callBack = callBack;
     }
+
+    public PushStatus getPushStatus() {
+        return pushStatus;
+    }
+
+
 }

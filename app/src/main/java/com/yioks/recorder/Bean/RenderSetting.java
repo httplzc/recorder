@@ -17,6 +17,8 @@ public class RenderSetting {
     //是否开启美颜
     private boolean enableBeauty = false;
 
+    private  int cameraRotate=0;
+
     public void setRenderSize(int renderWidth, int renderHeight) {
         this.renderWidth = renderWidth;
         this.renderHeight = renderHeight;
@@ -67,5 +69,13 @@ public class RenderSetting {
 
     public void setDisplayHeight(int displayHeight) {
         this.displayHeight = displayHeight;
+    }
+
+    public int getCameraRotate() {
+        return cameraRotate;
+    }
+
+    public void setCameraRotate(int cameraRotate) {
+        this.cameraRotate = cameraRotate;
     }
 }

@@ -73,12 +73,9 @@ public abstract class GlRenderNormalFBO extends GlRenderNormal {
     @Override
     public int drawFrame(int textureId, FloatBuffer vertexBuffer, FloatBuffer textureBuffer) {
         if (rotate != 0) {
-            runOnDraw(new Runnable() {
-                @Override
-                public void run() {
-                    Matrix.setIdentityM(mMVPMatrix, 0);
-                    Matrix.rotateM(mMVPMatrix, 0, rotate, 0, 0, 1f);
-                }
+            runOnDraw(() -> {
+                Matrix.setIdentityM(mMVPMatrix, 0);
+                Matrix.rotateM(mMVPMatrix, 0, rotate, 0, 0, 1f);
             });
         }
         if (mFramebuffers == null)

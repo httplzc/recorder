@@ -24,7 +24,7 @@ allprojects {
         mavenCentral()
         maven { url "https://dl.bintray.com/thelasterstar/maven/" }
         maven { url 'https://dl.google.com/dl/android/maven2/' }
-        maven{url "file:///D:/Work/lzc_library/maven/"}
+        maven{url "http://nexus.lizechao.com/repository/main_group/"}
     }
 }
 

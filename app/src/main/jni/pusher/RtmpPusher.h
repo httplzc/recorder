@@ -21,6 +21,7 @@
 #endif //YIOKS_RECORD_RTMPPUSHER_H
 extern "C" {
 #include "queue.h"
+#include "log.h"
 
 #ifdef VERBOSE
 
@@ -37,10 +38,12 @@ extern "C" {
 
 #define Fail 1
 #define Lost 2
+#define Connect 3
 
 
 class RtmpPusher {
 private:
+    char *pushUrl;
     int mediaSize;
     //rtmp开始时间
     long startTime;
@@ -50,12 +53,13 @@ private:
     pthread_cond_t cond;
 // rtmp
     RTMP *rtmpPusher;
-
-
+    //是否暂停
+    int isPause=FALSE;
     // 推流标志
     int pushing;
     // 请求停止
     int requestStop;
+    int isConnect=TRUE;
 
     // 入队
     void rtmpPacketPush(RTMPPacket *packet);
@@ -65,6 +69,8 @@ private:
 
     //推流线程
     static void *rtmpPushThread(void *args);
+
+    static void logCallback(int logLevel, const char* msg,va_list args);
 
 public:
     RtmpPusher()
@@ -79,7 +85,7 @@ public:
     void (*callback)(int status)=nullptr;
 
     //初始化推流器
-    int initRtmp(char *url);
+    void initRtmp(char *url);
 
     //推视频帧
     void pushVideoFrame(char *buf, int len,long time);
@@ -94,7 +100,7 @@ public:
     void pushAudioFormat(char *data, int length);
 
     //停止推流
-    void stop();
+    void stopPush();
 
     // 停止状态
     int isStop();
@@ -102,10 +108,15 @@ public:
     // 推流状态
     int isPushing();
 
+    // 请求暂停
+    void callPause();
+
+    // 请求恢复
+    void callResume();
+
     //设置推流器
     void setRtmpPusher(RTMP *pusher);
 
-    int reConnect();
 
     //获取推流器
     RTMP *getRtmpPusher();
@@ -113,6 +124,11 @@ public:
     void backFail();
 
     void backLost();
+    void backConnect();
 
+
+    int connectRTMP();
+
+    void releasePush();
 };
 }

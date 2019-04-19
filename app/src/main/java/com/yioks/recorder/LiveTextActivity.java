@@ -51,8 +51,8 @@ public class LiveTextActivity extends Activity {
     private SurfaceHolder holder;
     private LiveManager recorder;
 
-    private final static int TargetLongWidth = 1920;
-    private int TargetShortWidth = 1080;
+    private final static int TargetLongWidth = 1280;
+    private int TargetShortWidth = 720;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +73,18 @@ public class LiveTextActivity extends Activity {
         CameraSetting cameraSetting = new CameraSetting();
         cameraSetting.fps = 30;
         cameraSetting.cameraPosition = 0;
-        push_url.setText("rtmp://video-center-bj.alivecdn.com/AppName/StreamName?vhost=yioks-live-dev.yioks.com&auth_key=1522392582-0-0-072b19ed10bd184474c34010a5e10bdd");
+        cameraSetting.width = 720;
+        cameraSetting.height = 1280;
+//        push_url.setText("rtmp://video-center-bj.alivecdn.com/jiaozuo/3096?vhost=yioks-match-1.yioks.com&auth_key=1532193838-0-0-2d9a61d30ff00a7def95129e99e63502");
+        push_url.setText("rtmp://video-center-bj.alivecdn.com/devVideo/2791?vhost=yioks-match-dev.yioks.com&auth_key=1532606434-0-0-a1c42b71dd113fb4aeb67b8b0a5f71d2");
         RenderSetting renderSetting = new RenderSetting();
+        renderSetting.setDisplaySize(720, 1280);
+        renderSetting.setRenderSize(720, 1280);
         recorder = new LiveManager(this, recordSetting, cameraSetting, renderSetting, surfaceView);
         recorder.setPushCallBack(new PushManager.CallBack() {
+
             @Override
-            public void startSucceed() {
+            public void connect() {
                 Log.i("lzc", "开始成功");
                 btn1.setText("开始成功");
             }
@@ -122,8 +128,8 @@ public class LiveTextActivity extends Activity {
             @Override
             public void openCameraSuccess(int i) {
                 recorder.getRecordSetting().setVideoSetting(TargetShortWidth, TargetLongWidth,
-                        recorder.getCameraManager().getRealFps() / 1000, RecordSetting.ColorFormatDefault);
-                recorder.getRecordSetting().setVideoBitRate(3000 * 1024);
+                  recorder.getCameraManager().getRealFps() / 1000, RecordSetting.ColorFormatDefault);
+                recorder.getRecordSetting().setVideoBitRate(1500 * 1024);
                 recorder.switchOnBeauty(i == 1);
             }
 
@@ -145,75 +151,56 @@ public class LiveTextActivity extends Activity {
         holder = surfaceView.getHolder();
         holder.addCallback(new CustomCallBack());
 
-        btn1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                recorder.getRecordSetting().setPushUrl(push_url.getText().toString());
-                try {
-                    recorder.startRecord();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        btn1.setOnClickListener(v -> {
+            recorder.getRecordSetting().setPushUrl(push_url.getText().toString());
+            try {
+                recorder.startRecord();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
-        btn2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                recorder.stopRecord();
+        btn2.setOnClickListener(v -> recorder.stopRecord());
+        btn3.setOnClickListener(v -> {
+            if (btn3.getText().equals("继续")) {
+                btn3.setText("暂停");
+                recorder.init();
+                recorder.startRecord();
+            } else {
+                btn3.setText("继续");
+                recorder.pause();
             }
-        });
-        btn3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (btn3.getText().equals("继续")) {
-                    btn3.setText("暂停");
-                    recorder.init();
-                } else {
-                    btn3.setText("继续");
-                    recorder.pause();
-                }
 
-            }
         });
 
 
-        btn4.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (recorder.getStatus() != LiveManager.Status.PAUSE)
-                    recorder.getCameraManager().switchCamera();
-            }
+        btn4.setOnClickListener(v -> {
+            if (recorder.getCameraManager().isOpenCamera())
+                recorder.getCameraManager().switchCamera();
         });
 
-        btn5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean off = recorder.isSoundOff();
-                recorder.soundOff(!off);
-                if (recorder.isSoundOff())
-                    btn5.setText("开启声音");
-                else
-                    btn5.setText("静音");
-            }
+        btn5.setOnClickListener(v -> {
+            boolean off = recorder.isSoundOff();
+            recorder.soundOff(!off);
+            if (recorder.isSoundOff())
+                btn5.setText("开启声音");
+            else
+                btn5.setText("静音");
         });
 
-        btn6.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GlRenderImgList renderImgList = recorder.getGlRenderManager().getRenderList();
-                if (renderImgList.getSize() == 2) {
-                    renderImgList.clear();
-                    return;
-                }
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.match_water_img);
-                GlRenderImg glRenderImg = new GlRenderImg(bitmap);
-                glRenderImg.initVerticalPosition(bitmap.getWidth() / (float) surfaceView.getWidth(),
-                        bitmap.getHeight() / (float) surfaceView.getHeight(), 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
-                glRenderImg.initHorizontalPosition(bitmap.getWidth() / (float) TargetLongWidth,
-                        bitmap.getHeight() / (float) TargetShortWidth, 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
-
-                renderImgList.add(glRenderImg);
+        btn6.setOnClickListener(v -> {
+            GlRenderImgList renderImgList = recorder.getGlRenderManager().getRenderList();
+            if (renderImgList.getSize() == 2) {
+                renderImgList.clear();
+                return;
             }
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.match_water_img);
+            GlRenderImg glRenderImg = new GlRenderImg(bitmap);
+            glRenderImg.initVerticalPosition(bitmap.getWidth() / (float) surfaceView.getWidth(),
+              bitmap.getHeight() / (float) surfaceView.getHeight(), 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
+            glRenderImg.initHorizontalPosition(bitmap.getWidth() / (float) TargetLongWidth,
+              bitmap.getHeight() / (float) TargetShortWidth, 0.05f, renderImgList.getSize() == 0 ? 0.05f : 0.5f);
+
+            renderImgList.add(glRenderImg);
         });
     }
 
@@ -233,11 +220,11 @@ public class LiveTextActivity extends Activity {
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.match_water_img);
         GlRenderImg glRenderImg = new GlRenderImg(bitmap);
         glRenderImg.initVerticalPosition(bitmap.getWidth() / (float) surfaceView.getWidth(),
-                bitmap.getHeight() / (float) surfaceView.getHeight(), 0.05f, 0.05f);
+          bitmap.getHeight() / (float) surfaceView.getHeight(), 0.05f, 0.05f);
 //        glRenderImg.initVerticalPosition(0.5f,
 //                0.5f, 0, 0);
         glRenderImg.initHorizontalPosition(bitmap.getWidth() / (float) TargetLongWidth,
-                bitmap.getHeight() / (float) TargetShortWidth, 0.05f, 0.05f);
+          bitmap.getHeight() / (float) TargetShortWidth, 0.05f, 0.05f);
         GlRenderImgList renderImgList = recorder.getGlRenderManager().getRenderList();
         renderImgList.add(glRenderImg);
     }
@@ -267,6 +254,7 @@ public class LiveTextActivity extends Activity {
     protected void onDestroy() {
         if (recorder != null)
             recorder.destroy();
+
         super.onDestroy();
     }
 
@@ -274,7 +262,7 @@ public class LiveTextActivity extends Activity {
         List<String> requestStr = new ArrayList<>();
         for (String s : permission) {
             if (ContextCompat.checkSelfPermission(this, s)
-                    != PackageManager.PERMISSION_GRANTED) {
+              != PackageManager.PERMISSION_GRANTED) {
                 requestStr.add(s);
             }
         }

@@ -22,11 +22,6 @@ public class LiveManager extends RecordManageBase {
     private PushManager pusherManager;
     private PushManager.CallBack callBack;
 
-    public enum Status {UNLIVE, RECORD, PAUSE}
-
-    private Status status = Status.UNLIVE;
-
-    private boolean ignoreFormat = false;
 
     public LiveManager(Activity context, @Nullable RecordSetting recordSetting, @Nullable CameraSetting cameraSetting,
                        @Nullable RenderSetting renderSetting, SurfaceView surfaceView) {
@@ -36,46 +31,38 @@ public class LiveManager extends RecordManageBase {
 
     @Override
     public void startRecord() {
-        if (status == Status.RECORD)
-            return;
         super.startRecord();
-        if (status == Status.PAUSE) {
-            ignoreFormat = true;
-            status = Status.RECORD;
-        } else {
-            ignoreFormat = false;
-            onRecordStart();
-        }
-
+        onRecordStart();
     }
 
     private void onRecordStart() {
-        status = Status.RECORD;
         if (TextUtils.isEmpty(recordSetting.pushUrl)) {
             callLiveError();
             return;
         }
-        pusherManager = new PushManager(recordSetting.pushUrl);
-        pusherManager.setCallBack(new PushManager.CallBack() {
-            @Override
-            public void startSucceed() {
-                if (callBack != null)
-                    callBack.startSucceed();
-            }
+        if (pusherManager == null) {
+            pusherManager = new PushManager(recordSetting.pushUrl);
+            pusherManager.setCallBack(new PushManager.CallBack() {
+                @Override
+                public void connect() {
+                    if (callBack != null)
+                        callBack.connect();
+                }
 
-            @Override
-            public void fail() {
-                cancelRecord();
-                if (callBack != null)
-                    callBack.fail();
-            }
+                @Override
+                public void fail() {
+                    cancelRecord();
+                    if (callBack != null)
+                        callBack.fail();
+                }
 
-            @Override
-            public void lostPacket() {
-                if (callBack != null)
-                    callBack.lostPacket();
-            }
-        });
+                @Override
+                public void lostPacket() {
+                    if (callBack != null)
+                        callBack.lostPacket();
+                }
+            });
+        }
         pusherManager.start();
     }
 
@@ -98,7 +85,7 @@ public class LiveManager extends RecordManageBase {
 
     @Override
     protected int onFormatConfirm(DataType type, MediaFormat mediaFormat) {
-        if (ignoreFormat)
+        if (!isRecord)
             return type.ordinal();
         if (type == DataType.Type_Audio) {
             pusherManager.pushAudioFormat(mediaFormat.getByteBuffer("csd-0").array());
@@ -118,53 +105,49 @@ public class LiveManager extends RecordManageBase {
         this.callBack = callBack;
     }
 
+    private void destroyPusher()
+    {
+        if (pusherManager != null) {
+            pusherManager.stop();
+            pusherManager = null;
+        }
+    }
+
     @Override
     public void cancelRecord() {
         super.cancelRecord();
-        if (pusherManager != null)
-            pusherManager.stop();
-        status = Status.UNLIVE;
+        destroyPusher();
     }
 
 
     @Override
     protected void onRecordStop() {
-        if (pusherManager != null)
-            pusherManager.stop();
-        status = Status.UNLIVE;
+        destroyPusher();
     }
 
     @Override
     public void destroy() {
         super.destroy();
-        if (pusherManager != null)
-            pusherManager.stop();
-        status = Status.UNLIVE;
+        destroyPusher();
     }
 
     @Override
     public void init() {
         super.init();
-        if (status == Status.PAUSE) {
-            if (cameraManager.isOpenCamera()) {
-                startRecord();
-            }
-        }
-
     }
 
     public void pause() {
-        if (status == Status.RECORD) {
-            status = Status.PAUSE;
-        }
+        if (pusherManager != null)
+            pusherManager.pause();
         super.cancelRecord();
         if (cameraManager != null)
             cameraManager.freeCameraResource();
 
     }
 
-
-    public Status getStatus() {
-        return status;
+    public PushManager.PushStatus getPushStatus() {
+        return pusherManager.getPushStatus();
     }
+
+
 }

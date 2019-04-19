@@ -268,7 +268,7 @@ public abstract class RecordManageBase {
         glRenderManager.setmRecordWidth(getRecordSetting().width);
         glRenderManager.setmRecordHeight(getRecordSetting().height);
         boolean succeed = recordVideoManager.startRecord(recordSetting.width, recordSetting.height,
-                recordSetting.frameRate, recordSetting.videoBitRate, recordSetting.colorFormat);
+          recordSetting.frameRate, recordSetting.videoBitRate, recordSetting.colorFormat);
         if (succeed)
             recordAudioManager.startRecord(recordSetting.audioSampleRate, recordSetting.audioBitRate, recordSetting.desiredSpanSec);
         Surface surface = getRecordVideoManager().getInputSurface();
@@ -317,6 +317,7 @@ public abstract class RecordManageBase {
         surfaceTexture = new SurfaceTexture(textureId);
         try {
             glRenderManager = new GlRenderManager(context, textureId, surfaceView.getHolder().getSurface(), surfaceTexture);
+            glRenderManager.setCameraRotate(renderSetting.getCameraRotate());
         } catch (GlUtil.OpenGlException e) {
             e.printStackTrace();
             return;
@@ -349,10 +350,10 @@ public abstract class RecordManageBase {
 
     protected void syncSize() {
         if (glRenderManager != null && (glRenderManager.getmDisplayWidth() != renderSetting.getDisplayWidth()
-                || glRenderManager.getmDisplayHeight() != renderSetting.getDisplayHeight()))
+          || glRenderManager.getmDisplayHeight() != renderSetting.getDisplayHeight()))
             glRenderManager.onDisplaySizeChanged(renderSetting.getDisplayWidth(), renderSetting.getDisplayHeight());
         if (glRenderManager != null && (glRenderManager.getmTextureWidth() != renderSetting.getRenderWidth()
-                || glRenderManager.getmTextureHeight() != renderSetting.getRenderHeight()))
+          || glRenderManager.getmTextureHeight() != renderSetting.getRenderHeight()))
             glRenderManager.onInputSizeChanged(renderSetting.getRenderWidth(), renderSetting.getRenderHeight());
     }
 
@@ -509,6 +510,11 @@ public abstract class RecordManageBase {
     }
 
     public void changeScreenOrientation(boolean portrait) {
-        glRenderManager.setCameraRotate(portrait ? 0 : -90);
+        renderSetting.setCameraRotate(portrait ? 0 : -90);
+        glRenderManager.setCameraRotate(renderSetting.getCameraRotate());
+    }
+
+    public boolean isRecord() {
+        return isRecord;
     }
 }

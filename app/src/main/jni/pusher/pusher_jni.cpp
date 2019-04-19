@@ -23,15 +23,23 @@ JNIEnv *getEnvByJvm() {
 
 void callBackFail() {
     JNIEnv *env = getEnvByJvm();
-    if (env == nullptr||callbackClass==NULL)
+    if (env == nullptr || callbackClass == NULL)
         return;
     jmethodID failMethodId = env->GetMethodID(callbackClass, "fail", "()V");
     env->CallVoidMethod(callbackObj, failMethodId);
 }
 
+void callBackConnect() {
+    JNIEnv *env = getEnvByJvm();
+    if (env == nullptr || callbackClass == NULL)
+        return;
+    jmethodID failMethodId = env->GetMethodID(callbackClass, "connect", "()V");
+    env->CallVoidMethod(callbackObj, failMethodId);
+}
+
 void callBackLost() {
     JNIEnv *env = getEnvByJvm();
-    if (env == nullptr||callbackClass==NULL)
+    if (env == nullptr || callbackClass == NULL)
         return;
     jmethodID lostPackMethodId = env->GetMethodID(callbackClass, "lostPack", "()V");;
     env->CallVoidMethod(callbackObj, lostPackMethodId);
@@ -52,6 +60,10 @@ void callBack(int status) {
         //丢包回调
     else if (status == Lost) {
         callBackLost();
+    }
+    else if(status==Connect)
+    {
+        callBackConnect();
     }
 }
 
@@ -82,7 +94,7 @@ Java_com_yioks_recorder_LiveRecord_Pusher_pushVideoFormat(JNIEnv *env, jobject i
 
 JNIEXPORT void JNICALL
 Java_com_yioks_recorder_LiveRecord_Pusher_pushVideoFrame(JNIEnv *env, jobject instance,
-                                                         jbyteArray data_,jlong time_) {
+                                                         jbyteArray data_, jlong time_) {
     char *data = (char *) env->GetByteArrayElements(data_, NULL);
 
     if (rtmpPusher) {
@@ -94,7 +106,7 @@ Java_com_yioks_recorder_LiveRecord_Pusher_pushVideoFrame(JNIEnv *env, jobject in
 
 JNIEXPORT void JNICALL
 Java_com_yioks_recorder_LiveRecord_Pusher_pushAudioFrame(JNIEnv *env, jobject instance,
-                                                         jbyteArray data_,jlong time_) {
+                                                         jbyteArray data_, jlong time_) {
     char *data = (char *) env->GetByteArrayElements(data_, NULL);
     if (rtmpPusher) {
         rtmpPusher->pushAudioFrame(data, env->GetArrayLength(data_), (long) time_);
@@ -105,25 +117,39 @@ Java_com_yioks_recorder_LiveRecord_Pusher_pushAudioFrame(JNIEnv *env, jobject in
 JNIEXPORT void JNICALL
 Java_com_yioks_recorder_LiveRecord_Pusher_stop(JNIEnv *env, jobject instance) {
     if (rtmpPusher) {
-        rtmpPusher->stop();
+        rtmpPusher->stopPush();
         rtmpPusher = NULL;
         env->DeleteGlobalRef(callbackClass);
-        callbackClass= NULL;
+        callbackClass = NULL;
     }
 }
 
 
-JNIEXPORT int JNICALL
-Java_com_yioks_recorder_LiveRecord_Pusher_start(JNIEnv *env, jobject instance, jstring url_) {
-    const char *url = env->GetStringUTFChars(url_, 0);
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yioks_recorder_LiveRecord_Pusher_pause(JNIEnv *env, jobject instance) {
 
+    if (rtmpPusher) {
+        rtmpPusher->callPause();
+    }
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_yioks_recorder_LiveRecord_Pusher_resume(JNIEnv *env, jobject instance) {
+    if (rtmpPusher) {
+        rtmpPusher->callResume();
+    }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_yioks_recorder_LiveRecord_Pusher_start(JNIEnv *env, jobject instance, jstring url_) {
+    jstring gloStr= (jstring)(env->NewGlobalRef(url_));
+    const char *url = env->GetStringUTFChars(gloStr, NULL);
     if (!rtmpPusher) {
         rtmpPusher = new RtmpPusher();
         rtmpPusher->callback = callBack;
         initCallback(env, instance);
     }
-    int result = rtmpPusher->initRtmp((char *) url);
-    env->ReleaseStringUTFChars(url_, url);
-    return result;
+    rtmpPusher->initRtmp((char *) url);
+    return;
 }
 }
