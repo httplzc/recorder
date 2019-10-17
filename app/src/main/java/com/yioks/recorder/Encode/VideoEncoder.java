@@ -17,7 +17,6 @@ import java.nio.ByteBuffer;
 
 import static android.media.MediaFormat.KEY_FRAME_RATE;
 
-
 /**
  * 视频编码
  */
@@ -33,13 +32,11 @@ public class VideoEncoder {
     //硬编码显存
     private Surface mInputSurface;
 
-
     public static final int MSG_BUFFER_STATUS = 3;
     public static final int MSG_Format_Confirm = 4;
     public static final int MSG_Frame_Available = 5;
     public static final int MSG_Thread_Finish = 0;
     public static final int MSG_Thread_Error = 1;
-
 
     /**
      * Configures encoder, and prepares the input Surface.
@@ -65,12 +62,10 @@ public class VideoEncoder {
         mInputSurface = mEncoder.createInputSurface();
         mEncoder.start();
 
-
         mEncoderThread = new EncoderThread(mEncoder, videoCallBackHandler);
         mEncoderThread.start();
         mEncoderThread.waitUntilReady();
     }
-
 
     /**
      * Returns the encoder's input surface.
@@ -91,7 +86,6 @@ public class VideoEncoder {
         handler.sendMessage(handler.obtainMessage(EncoderThread.EncoderHandler.MSG_SHUTDOWN, succeed));
     }
 
-
     /**
      * 帧绘制完毕调用
      */
@@ -100,7 +94,6 @@ public class VideoEncoder {
         handler.sendMessage(handler.obtainMessage(
                 EncoderThread.EncoderHandler.MSG_FRAME_AVAILABLE_SOON));
     }
-
 
     /**
      * 编码线程
@@ -233,6 +226,7 @@ public class VideoEncoder {
                     currentTime = mBufferInfo.presentationTimeUs;
                     if (firstTime == -1)
                         firstTime = currentTime;
+                    mBufferInfo.presentationTimeUs = currentTime - firstTime;
                     frameAvailable(new MediaFrameData(encodedData, mBufferInfo));
                 }
                 mEncoder.releaseOutputBuffer(encoderStatus, false);
@@ -260,7 +254,6 @@ public class VideoEncoder {
             }
         }
 
-
         /**
          * Tells the Looper to quit.
          */
@@ -268,7 +261,6 @@ public class VideoEncoder {
             if (VERBOSE) Log.d(TAG, "shutdown");
             getHandler().getLooper().quit();
         }
-
 
         // CircularEncoder.Callback, called on encoder thread
         //long64位拆为两个32位int的数据
@@ -292,7 +284,6 @@ public class VideoEncoder {
         public void error(String msg) {
             videoCallBackHandler.sendMessage(videoCallBackHandler.obtainMessage(MSG_Thread_Error, msg));
         }
-
 
         /**
          * 事件消息管理
@@ -338,7 +329,6 @@ public class VideoEncoder {
             }
         }
     }
-
 
     public MediaFormat getFormat() {
         if (mEncoderThread != null)

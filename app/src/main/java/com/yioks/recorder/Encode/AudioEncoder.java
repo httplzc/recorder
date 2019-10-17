@@ -152,6 +152,8 @@ public class AudioEncoder {
         private volatile boolean mReady = false;
         private AudioRecord audioRecord;
         private int bufferSizeInBytes;
+        private long firstTime = -1;
+        private long currentTime = 0;
 
         public AudioCallBackHandler callBackHandler;
 
@@ -302,6 +304,10 @@ public class AudioEncoder {
                     }
 
                     if (mBufferInfo.size != 0) {
+                        currentTime = mBufferInfo.presentationTimeUs;
+                        if (firstTime == -1)
+                            firstTime = currentTime;
+                        mBufferInfo.presentationTimeUs = currentTime - firstTime;
                         MediaFrameData mediaFrameData = new MediaFrameData(encodedData, mBufferInfo);
                         callBackHandler.sendMessage(Message.obtain(callBackHandler, MSG_Frame_Available, mediaFrameData));
                     }
